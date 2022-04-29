@@ -32,7 +32,13 @@ public:
 
     int from_bin(char* data)
     {
-        //
+        char* tmp = data + sizeof(int32_t);
+        memcpy(name, tmp, MAX_NAME);
+        tmp += MAX_NAME;
+        memcpy(&x, tmp, sizeof(int16_t));
+        tmp += sizeof(int16_t);
+        memcpy(&y, tmp, sizeof(int16_t));
+
         return 0;
     }
 
@@ -57,10 +63,15 @@ int main(int argc, char** argv)
     one_w.to_bin();     //Traduce los datos del jugador al bin
     // 2. Escribir la serialización en un fichero
     write(file, one_w.data(), one_w.size());
-    close(file);
     // 3. Leer el fichero
+    read(file, one_w.data(), one_w.size());
+    close(file);
+
     // 4. "Deserializar" en one_r
+    one_r.from_bin(one_w.data());
+
     // 5. Mostrar el contenido de one_r
+    std::cout << "Jugador: " << one_r.name << " x: " << one_r.x << " y: " << one_r.y << std::endl;
 
     return 0;
 }
