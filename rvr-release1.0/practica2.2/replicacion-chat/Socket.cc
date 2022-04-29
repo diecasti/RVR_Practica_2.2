@@ -19,12 +19,14 @@ Socket::Socket(const char* address, const char* port) :sd(-1)
 		std::cout << "Error de conexion" << std::endl;
 
 	//Con el resultado inicializar los miembros sd, sa y sa_len de la clase
-	sa = res->ai_addr;
+	sa = *res->ai_addr;
 	sa_len = res->ai_addrlen;
 
 	sd = socket(res->ai_family, res->ai_socktype, 0);
 	if (sd < 0)
 		std::cout << "Error en la creacion del socket" << std::endl;
+
+	freeaddrinfo(res);
 }
 
 int Socket::recv(Serializable& obj, Socket*& sock)
@@ -57,8 +59,10 @@ int Socket::send(Serializable& obj, const Socket& sock)
 	obj.to_bin();
 
 	//Enviar el objeto binario a sock usando el socket sd
-	int data = sendto(sock.sd, (void*)obj.data(), obj.size(), 0, (struct sockaddr*)&sock.sa, sock.sa_len);
-	return data;
+	int data = sendto(sd, (void*)obj.data(), obj.size(), 0, (struct sockaddr*)&sock.sa, sock.sa_len);
+	if (data <= 0)
+		return -1;
+	return 0;
 }
 
 bool operator== (const Socket& s1, const Socket& s2)
@@ -66,15 +70,12 @@ bool operator== (const Socket& s1, const Socket& s2)
 	//Comparar los campos sin_family, sin_addr.s_addr y sin_port
 	//de la estructura sockaddr_in de los Sockets s1 y s2
 	//Retornar false si alguno difiere
-	if (s1.sa.sa_family == AF_INET && s2.sa.sa_family == AF_INET)
-	{
-		struct sockaddr_in* sock1 = (struct sockaddr_in*)s1.sa.sa_data;
-		struct sockaddr_in* sock2 = (struct sockaddr_in*)s2.sa.sa_data;
+	struct sockaddr_in* sock1 = (struct sockaddr_in*)s1.sa.sa_data;
+	struct sockaddr_in* sock2 = (struct sockaddr_in*)s2.sa.sa_data;
 
-		return(sock1->sin_family == sock2->sin_family &&
-			sock1->sin_port == sock2->sin_port &&
-			sock1->sin_addr.s_addr == sock2->sin_addr.s_addr);
-	}
+	return(sock1->sin_family == sock2->sin_family &&
+		sock1->sin_port == sock2->sin_port &&
+		sock1->sin_addr.s_addr == sock2->sin_addr.s_addr);
 };
 
 std::ostream& operator<<(std::ostream& os, const Socket& s)
