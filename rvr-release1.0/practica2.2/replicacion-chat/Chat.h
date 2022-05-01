@@ -27,7 +27,12 @@
 class ChatMessage: public Serializable
 {
 public:
+
     static const size_t MESSAGE_SIZE = sizeof(char) * 88 + sizeof(uint8_t);
+
+    static const size_t NICK_SIZE = 8;
+
+    static const size_t MSG_SIZE = 80;
 
     enum MessageType
     {
